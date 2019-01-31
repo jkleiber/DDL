@@ -39,7 +39,15 @@ const int blue_pins[]  = {25, 26, 2};
  */
 void bus_out_write(unsigned int bits, int *ports, int *pins, int num_bits)
 {
-
+    for(i=0; i<num_bits; i++)
+     if((bits>>i)&i)
+        {
+            FIO[ports[i]].FIOPIN |= (1<<pins[i]);
+        }
+     else
+        {
+            FIO[ports[i]].FIOPIN &= ~(1<<pins[i]);
+        }
 }
 
 /**
