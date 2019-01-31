@@ -7,6 +7,7 @@ typedef struct GPIO_regs_t
     volatile unsigned int FIOPIN;
     volatile unsigned int FIOSET;
     volatile unsigned int FIOCLR;
+
 } GPIO_regs;
 
 //Define FIO
@@ -25,8 +26,13 @@ const int green_pins[]  = {17, 15, 16, 23, 24};
 const int blue_ports[] = { 0,  0, 0};
 const int blue_pins[]  = {25, 26, 2};
 
-/* Set the port/pin combos for the buttons */
-// TODO: choose pins and implement
+//Left Button Ports located at p210, p211, p212
+const int left_button_ports[] = { 2,  2, 2};
+const int left_button_pins[]  = {10, 11, 12};
+
+//Right Button Ports located at p04, p05, p010
+const int right_button_ports[] = { 0,  0, 0};
+const int right_button_pins[]  = {4, 5, 10};
 
 /**
  * bus_out_write - Function that can write a series of bits to a set of pins.
@@ -102,6 +108,8 @@ int main(void)
 	int red = 0;        //tracks how many red LEDs are off using bit shifting
 	int green = 0;      //tracks how many green LEDs are off using bit shifting
 	int blue = 0;       //tracks how many blue LEDs are off using bit shifting
+    int latch = -1;     //triggers to track which butten the player can press on their turn
+    int othButton = -1; //
 
     /* Run the program forever */
     while(1)
@@ -109,22 +117,56 @@ int main(void)
         //If it is player 0's turn
         if(turn == 0)
         {
-            //Check player 0's buttons
-            //If it is the first time this player has pressed a button (lastTurn != 0) allow any button press
-            //Otherwise only allow the current button
-                //If the other player presses a button then it is now their turn
-                turn = 1;
+            othButton = 0;
+            do 
+            {
+                curButton = bus_in_read(left_button_ports[i], left_button_pins[i]);
+                if(curButton == latch || (curButton == 1 && latch == -1))
+                {
+                    latch = 1;
+                    blue <<= 1;
+                }
+                else if(curButton == latch || (curButton == 2 && latch == -1))
+                {
+                    latch = 2;
+                    green <<= 1;
+                }
+                else if(curButton == latch || (curButton == 4 && latch == -1))
+                {
+                    latch = 4;
+                    red <<= 1;
+                }
+                othButton = bus_in_read(right_button_ports[i], right_button_pins[i],3);
+            }
+            while(othButton==0)
+            turn = 1;
         }
-        //Otherwise it is player 1's turn
         else
         {
-            //Check player 1's buttons
-            //If it is the first time this player has pressed a button (lastTurn != 1) allow any button press
-            //Otherwise only allow the current button
-                //If the other player presses a button then it is now their turn
-                turn = 0;
+            othButton = 0;
+            do 
+            {
+                curButton = bus_in_read(right_button_ports[i], right_button_pins[i]);
+                if(curButton == latch || (curButton == 1 && latch == -1))
+                {
+                    latch = 1;
+                    blue <<= 1;
+                }
+                else if(curButton == latch || (curButton == 2 && latch == -1))
+                {
+                    latch = 2;
+                    green <<= 1;
+                }
+                else if(curButton == latch || (curButton == 4 && latch == -1))
+                {
+                    latch = 4;
+                    red <<= 1;
+                }
+                othButton = bus_in_read(left_button_ports[i], left_button_pins[i],3);
+            }
+            while(othButton==0)
+            turn = 1;
         }
-        
     }
 
 }
