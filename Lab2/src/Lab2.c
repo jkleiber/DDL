@@ -2,7 +2,7 @@
 typedef struct GPIO_regs_t
 {
     volatile unsigned int FIODIR;
-    int rsvd[3];    // TODO: check the user manual to see if this is supposed to be 3 pad bytes or just 1
+    int                   rsvd[3];
     volatile unsigned int FIOMASK;
     volatile unsigned int FIOPIN;
     volatile unsigned int FIOSET;
@@ -11,6 +11,13 @@ typedef struct GPIO_regs_t
 
 //Define FIO
 #define FIO ((GPIO_regs *)0x2009c000)
+
+//Define the PINMODE registers
+#define PINMODE0 (*(volatile int *) 0x4002C040)
+#define PINMODE1 (*(volatile int *) 0x4002C044)
+#define PINMODE2 (*(volatile int *) 0x4002C048)
+#define PINMODE3 (*(volatile int *) 0x4002C04C)
+#define PINMODE4 (*(volatile int *) 0x4002C050)
 
 /* Set the port/pin combos used to control the LEDs*/
 //Red LEDs located at p00, p01, p06, p07, p08, p09, p018
