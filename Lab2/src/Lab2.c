@@ -43,7 +43,6 @@ const int left_button_pins[] = {10, 11, 12};
 const int right_button_ports[] = {0, 0, 0};
 const int right_button_pins[] = {4, 5, 10};
 
-int turn = 0;       //tracks the players turns (0 or 1)
 int red = 0;        //tracks how many red LEDs are off using bit shifting
 int green = 0;      //tracks how many green LEDs are off using bit shifting
 int blue = 0;       //tracks how many blue LEDs are off using bit shifting
@@ -68,7 +67,7 @@ void wait_ticks(int count)
  * @param *pins: list of pins to alter based on bit list
  * @param num_bits: number of bits to write
  */
-void bus_out_write(unsigned int bits, int *ports, int *pins, int num_bits)
+void bus_out_write(unsigned int bits, const int *ports, const int *pins, int num_bits)
 {
     for (int i = 0; i < num_bits; i++)
     {
@@ -88,8 +87,9 @@ void bus_out_write(unsigned int bits, int *ports, int *pins, int num_bits)
  * read_single - Function that reads a single port and pin combination
  *               and returns the current state
  */
-unsigned int read_single(int port, int pin)
+unsigned int read_single(const int port, const int pin)
 {
+    FIO[port].FIODIR &= ~(1 << pin);
     return ((FIO[port].FIOPIN >> pin) & 1);
 }
 
@@ -101,54 +101,58 @@ unsigned int read_single(int port, int pin)
  * @param num_pins: number of pins to read
  * @return: an unsigned int with the readings from the bus
  */
-unsigned int bus_in_read(int *ports, int *pins, int num_pins)
+unsigned int bus_in_read(const int *ports, const int *pins, int num_pins)
 {
     //Declare and initialize local variables
     int output = 0;
+    int state;
 
     //Iterate through each port/pin combo and read data
     for (int i = 0; i < num_pins; ++i)
     {
+        state = read_single(ports[i], pins[i]);
+
         //If the pin value is HIGH, set this bit to 1
-        if (read_single(ports[i], pins[i]))
+        if (state)
         {
-            output = output << 1;
+            output = (output << 1) | 1;
         }
         //Otherwise set this bit to 0
         else
         {
-            output = (output << 1) | 1;
+            output = output << 1;
         }
     }
 
     return output;
 }
 
-void buttonPress(int curButton, int reset)
-{    
-    int pressed;
+void buttonPress(int curButton, int turn, int reset)
+{
     int port;
     int pin;
-    if (curButton == latch || (curButton == 1 && (latch == -1 || reset)))
+
+    if ((curButton == latch && latch == 1) || (curButton == 1 && (latch == -1 || reset)))
     {
         wait_ticks(9000); //wait about 22 msec
-        port = turn == 0 ? left_button_ports[0] : right_button_ports[0];
-        pin = turn == 0 ? left_button_pins[0] : right_button_pins[0]; 
+        port = turn == 0 ? left_button_ports[2] : right_button_ports[2];
+        pin = turn == 0 ? left_button_pins[2] : right_button_pins[2]; 
         if(read_single(port,pin))
         {
             latch = 1;
             if(blue < 7)
             {
-                blue <<= 1;
+                blue = (blue << 1) | 1;
                 bus_out_write(blue, blue_ports, blue_pins, 3);
             }
+
             while(read_single(port,pin))
             {
                 wait_ticks(8000);
             }
         }
     }
-    else if (curButton == latch || (curButton == 2 && (latch == -1 || reset)))
+    else if ((curButton == latch && latch == 2) || (curButton == 2 && (latch == -1 || reset)))
     {
         wait_ticks(9000); //wait about 22 msec
         port = turn == 0 ? left_button_ports[1] : right_button_ports[1];
@@ -158,27 +162,33 @@ void buttonPress(int curButton, int reset)
             latch = 2;
             if(green < 31)
             {
-                green <<= 1;
+                green = (green << 1) | 1;
                 bus_out_write(green, green_ports, green_pins, 5);
             }
+
             while(read_single(port,pin))
             {
                 wait_ticks(8000);
             }
         }
     }
-    else if (curButton == latch || (curButton == 4 && (latch == -1 || reset)))
+    else if ((curButton == latch && latch == 4) || (curButton == 4 && (latch == -1 || reset)))
     {
         wait_ticks(9000); //wait about 22 msec
-        port = turn == 0 ? left_button_ports[2] : right_button_ports[2];
-        pin = turn == 0 ? left_button_pins[2] : right_button_pins[2]; 
+        port = turn == 0 ? left_button_ports[0] : right_button_ports[0];
+        pin = turn == 0 ? left_button_pins[0] : right_button_pins[0]; 
         if(read_single(port,pin))
         {
             latch = 4;
             if(red < 127)
             {
-                red <<= 1;
+                red = (red << 1) | 1;
                 bus_out_write(red, red_ports, red_pins, 7);
+            }
+
+            while(read_single(port,pin))
+            {
+                wait_ticks(8000);
             }
         }
     }
@@ -191,8 +201,8 @@ int main(void)
 {
     /* Declare and initialize local variables*/
     int curButton = -1; //tracks the last button press
-    int lastTurn = -1;  //tracks who moved last
-    int othButton = -1; //
+    int othButton = -1; //tracks the other player's button press
+    int turn = 0;       //tracks the players turns (0 or 1)
 
     PINMODE4 |= (0x3F<<20); //sets the button pins to pull-down resistors
     PINMODE0 |= (0xF<<8) | (0x3<<20);
@@ -215,13 +225,20 @@ int main(void)
             {
                 //
                 curButton = bus_in_read(left_button_ports, left_button_pins, 3);
-                buttonPress(curButton,FALSE);
+                buttonPress(curButton, turn, FALSE);
                 //
                 othButton = bus_in_read(right_button_ports, right_button_pins, 3);
 
+                if(red >= 127 && green >= 31 && blue >= 7)
+                {
+                    othButton = -1;
+                    break;
+                }
+
             } while (othButton == 0);
-            buttonPress(othButton,TRUE);
+            
             turn = 1;
+            buttonPress(othButton, turn, TRUE);
         }
         else
         {
@@ -233,24 +250,34 @@ int main(void)
             {
                 //
                 curButton = bus_in_read(right_button_ports, right_button_pins, 3);
-                buttonPress(curButton,FALSE);
+                buttonPress(curButton, turn, FALSE);
 
                 //
                 othButton = bus_in_read(left_button_ports, left_button_pins, 3);
 
+                if(red >= 127 && green >= 31 && blue >= 7)
+                {
+                    othButton = -1;
+                    break;
+                }
+
             } while (othButton == 0);
-            buttonPress(othButton,TRUE);
-            turn = 1;
+            
+            turn = 0;
+            buttonPress(othButton, turn, TRUE);
         }
+
         if(red >= 127 && green >= 31 && blue >= 7)
         {
             wait_ticks(1210796); //wait 3 seconds
             red = 0;
             blue = 0;
             green = 0;
-            bus_out_write(red,red_ports,red_pins,3);
+            latch = -1;
+            turn = 0;
+            bus_out_write(red,red_ports,red_pins,7);
             bus_out_write(blue,blue_ports,blue_pins,3);
-            bus_out_write(green,green_ports,green_pins,3);
+            bus_out_write(green,green_ports,green_pins,5);
         }
     }
 }
