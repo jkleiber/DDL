@@ -1,0 +1,65 @@
+//Resetting the counter (and turning it back on)
+T0TCR |= (1 << 1); //set the reset bit to not resetting
+while (T0TCR != 0) {} //Do some counting
+T0TCR &= ~(1 << 1); //reset the counter
+
+//Alternate way to reset the counter
+T0TCR = 0;
+
+//Waiting for a certain amount of microseconds
+void wait_us(int us)
+{
+    int start;
+    start = T0TC;       //Get the current time
+    T0TCR |= (1 << 0);  //enable the counter
+
+    while(T0TC - start < us){}  //wait until the time difference is large enough, then wait is overs
+}
+
+//What if the counter overflows in the middle of the wait?
+    //Since this is a 32 bit processor and a 32 bit counter, the subtraction will overflow at the same time the counter overflows
+
+//8 bit example:
+    //start = 250
+    //current = 255
+    //diff = 5
+
+    //start = 250
+    //current = 260 -> 10
+    //diff = 10 - 250 = -240 -> 15
+
+//wait for a certain amount of milliseconds
+void wait_ms(int ms)
+{
+    wait_us(1000 * ms);
+}
+
+//wait for a certain amount of seconds
+void wait(int sec)
+{
+    wait_us(1000000 * sec);
+}
+
+
+
+//TODO: look up match registers in the user manual
+
+//More complex things:
+T2MR0 = halfperiod - 1; //match the timer for a half period
+T2MCR |= (1 << 1);      //reset the timer
+T2EMR |= (3 << 4);      //toggle the external match register on match
+T2TCR |= (1 << 1);      //enable the counter
+PINSEL0 |= (3 << 12);
+T2TC = 0;               //reset the counter so you don't put the match register behind the timer value
+MAT2.0
+
+MAT0.0 --> MAT[timer_subsystem].[match_register]
+
+
+//Using PWM as a timer
+PWM1MR0 = period;
+PWM1MR1 = highTime;
+PWM1MCR |= (1 << 1);
+PWM1PCR |= (1 << 9);
+PWM1TCR |= (1 << 0);
+PINSEL4 |= (1 << 0); //Needs to be 01, so maybe add a &= here for guarantees

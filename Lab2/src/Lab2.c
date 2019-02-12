@@ -127,18 +127,32 @@ unsigned int bus_in_read(const int *ports, const int *pins, int num_pins)
     return output;
 }
 
+/**
+ * buttonPress - given a button press, determine if a light should be turned off
+ * 
+ * @param curButton: the code of the button that just got pressed
+ * @param turn: whose turn is it
+ * @param reset: reset the turn and allow all buttons to be pressed
+ */
 void buttonPress(int curButton, int turn, int reset)
 {
+    //Declare local variables
     int port;
     int pin;
 
+    // Check to see if the first button was pressed (if it is allowed to be)
     if ((curButton == latch && latch == 1) || (curButton == 1 && (latch == -1 || reset)))
     {
         wait_ticks(9000); //wait about 22 msec
+        
+        //Get port and pin from player turn
         port = turn == 0 ? left_button_ports[2] : right_button_ports[2];
         pin = turn == 0 ? left_button_pins[2] : right_button_pins[2]; 
+        
+        //Prevent switch bounce
         if(read_single(port,pin))
         {
+            //Lock player in to blue LEDs and turn a blue LED off
             latch = 1;
             if(blue < 7)
             {
@@ -146,19 +160,26 @@ void buttonPress(int curButton, int turn, int reset)
                 bus_out_write(blue, blue_ports, blue_pins, 3);
             }
 
+            //Wait for player to stop pressing button
             while(read_single(port,pin))
             {
                 wait_ticks(8000);
             }
         }
     }
+    // Check to see if the second button was pressed (if it is allowed to be)
     else if ((curButton == latch && latch == 2) || (curButton == 2 && (latch == -1 || reset)))
     {
         wait_ticks(9000); //wait about 22 msec
+        
+        //Find port and pin from player turn data
         port = turn == 0 ? left_button_ports[1] : right_button_ports[1];
         pin = turn == 0 ? left_button_pins[1] : right_button_pins[1]; 
+        
+        //Avoid switch bounce
         if(read_single(port,pin))
         {
+            //Lock the player in to the green LED and turn one off
             latch = 2;
             if(green < 31)
             {
@@ -166,19 +187,26 @@ void buttonPress(int curButton, int turn, int reset)
                 bus_out_write(green, green_ports, green_pins, 5);
             }
 
+            //Wait for the player to let go
             while(read_single(port,pin))
             {
                 wait_ticks(8000);
             }
         }
     }
+    // Check to see if the third button was pressed (if it is allowed to be)
     else if ((curButton == latch && latch == 4) || (curButton == 4 && (latch == -1 || reset)))
     {
         wait_ticks(9000); //wait about 22 msec
+
+        //Get port and pin of button based off of turn
         port = turn == 0 ? left_button_ports[0] : right_button_ports[0];
         pin = turn == 0 ? left_button_pins[0] : right_button_pins[0]; 
+
+        //Only allow actual button presses
         if(read_single(port,pin))
         {
+            //Lock player into using the Red buttons and turn an LED off
             latch = 4;
             if(red < 127)
             {
@@ -186,6 +214,7 @@ void buttonPress(int curButton, int turn, int reset)
                 bus_out_write(red, red_ports, red_pins, 7);
             }
 
+            //Wait for the player to let go
             while(read_single(port,pin))
             {
                 wait_ticks(8000);
@@ -204,9 +233,11 @@ int main(void)
     int othButton = -1; //tracks the other player's button press
     int turn = 0;       //tracks the players turns (0 or 1)
 
-    PINMODE4 |= (0x3F<<20); //sets the button pins to pull-down resistors
+    //Set the buttons to be pull-down resistors
+    PINMODE4 |= (0x3F<<20);
     PINMODE0 |= (0xF<<8) | (0x3<<20);
 
+    //Turn on the LEDs
     bus_out_write(red,red_ports,red_pins,7);
     bus_out_write(blue,blue_ports,blue_pins,3);
     bus_out_write(green,green_ports,green_pins,5);
@@ -217,18 +248,20 @@ int main(void)
         //If it is player 0's turn
         if (turn == 0)
         {
-            //
+            // Reset the other player's buttons
             othButton = 0;
 
-            //
+            // Read player 0's buttons until their turn is over (when player 1 goes)
             do
             {
-                //
+                //Get the current button from a bulk read
                 curButton = bus_in_read(left_button_ports, left_button_pins, 3);
                 buttonPress(curButton, turn, FALSE);
-                //
+                
+                //See if the other player pressed any buttons
                 othButton = bus_in_read(right_button_ports, right_button_pins, 3);
 
+                //Check for game over condition
                 if(red >= 127 && green >= 31 && blue >= 7)
                 {
                     othButton = -1;
@@ -237,24 +270,26 @@ int main(void)
 
             } while (othButton == 0);
             
+            //Switch turns and update LEDs of other player
             turn = 1;
             buttonPress(othButton, turn, TRUE);
         }
         else
         {
-            //
+            //Reset other player's buttons
             othButton = 0;
 
-            //
+            //Read player 1's buttons until their turn is over
             do
             {
-                //
+                //Read and process player 1 button input
                 curButton = bus_in_read(right_button_ports, right_button_pins, 3);
                 buttonPress(curButton, turn, FALSE);
 
-                //
+                //Read other buttons to detect turn end
                 othButton = bus_in_read(left_button_ports, left_button_pins, 3);
 
+                //If the game is over, break the loop
                 if(red >= 127 && green >= 31 && blue >= 7)
                 {
                     othButton = -1;
@@ -263,18 +298,25 @@ int main(void)
 
             } while (othButton == 0);
             
+            //Switch turn
             turn = 0;
             buttonPress(othButton, turn, TRUE);
         }
 
+        //If the game is over, wait for 3 seconds and then restart
         if(red >= 127 && green >= 31 && blue >= 7)
         {
-            wait_ticks(1210796); //wait 3 seconds
+            //wait 3 seconds
+            wait_ticks(1210796); 
+            
+            //Reset game management variables
             red = 0;
             blue = 0;
             green = 0;
             latch = -1;
             turn = 0;
+
+            //Turn LEDs back on
             bus_out_write(red,red_ports,red_pins,7);
             bus_out_write(blue,blue_ports,blue_pins,3);
             bus_out_write(green,green_ports,green_pins,5);
