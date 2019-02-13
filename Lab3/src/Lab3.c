@@ -5,7 +5,8 @@
 #define PLL0CON (*(volatile int *) 0x400FC080)      //Control PLL0 with this control register
 #define PLL0FEED (*(volatile int *) 0x400FC08C)     //Feed sequence needed to allow control of PLL0
 #define PLL0STAT (*(volatile int *) 0x400FC088)     //PLL0 status register
-#define CLKOUTCFG (*(volatile int *) 0x400FC1C8)
+#define CLKOUTCFG (*(volatile int *) 0x400FC1C8)    //Configure the clock output
+#define PINSEL3 (*(volatile int *) 0x4002C00C)      //Configure the CLKOUT pin
 
 /* Define all program macros */
 #define PLL_FEED() PLL0FEED = 0xAA; PLL0FEED = 0x55
@@ -24,9 +25,6 @@
 
 int main(void)
 {
-    //Allow the clock to be output onto P1.27
-    CLKOUT_ENABLE();
-
     //Disconnect PLL0
     PLL_DISCONNECT();
 
@@ -46,10 +44,16 @@ int main(void)
     while(!(PLL0STAT >> 26)) {}
 
     //Now that PLL0 has locked, choose the correct clock divider configuration
-    CCLK_DIV(32);
+    CCLK_DIV(31);
 
     //Connect PLL0
     PLL_CONNECT();
+
+    //Set P1.27 into clock output mode
+    PINSEL3 |= (1 << 22);
+
+    //Allow the clock to be output onto P1.27
+    CLKOUT_ENABLE();
 
     //Run the program infinitely
     while(1){}
