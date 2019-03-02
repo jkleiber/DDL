@@ -21,8 +21,13 @@
 							<targetPlatform binaryParser="org.eclipse.cdt.core.ELF;org.eclipse.cdt.core.GNU_ELF" id="com.crt.advproject.platform.exe.debug.705450326" name="ARM-based MCU (Debug)" superClass="com.crt.advproject.platform.exe.debug"/>
 							<builder buildPath="${workspace_loc:/Lab3}/Debug" id="com.crt.advproject.builder.exe.debug.1546777496" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="com.crt.advproject.builder.exe.debug"/>
 							<tool id="com.crt.advproject.cpp.exe.debug.1764027259" name="MCU C++ Compiler" superClass="com.crt.advproject.cpp.exe.debug">
+<<<<<<< Updated upstream
 								<option id="com.crt.advproject.cpp.hdrlib.415476584" superClass="com.crt.advproject.cpp.hdrlib"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1343975368" superClass="gnu.cpp.compiler.option.preprocessor.def"/>
+=======
+								<option id="com.crt.advproject.cpp.hdrlib.37704091" superClass="com.crt.advproject.cpp.hdrlib"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1106356658" superClass="gnu.cpp.compiler.option.preprocessor.def"/>
+>>>>>>> Stashed changes
 							</tool>
 							<tool id="com.crt.advproject.gcc.exe.debug.469296011" name="MCU C Compiler" superClass="com.crt.advproject.gcc.exe.debug">
 								<option id="com.crt.advproject.gcc.thumb.1560182323" name="Thumb mode" superClass="com.crt.advproject.gcc.thumb" value="true" valueType="boolean"/>
@@ -50,7 +55,11 @@
 								<inputType id="com.crt.advproject.assembler.input.1681189684" name="Additional Assembly Source Files" superClass="com.crt.advproject.assembler.input"/>
 							</tool>
 							<tool id="com.crt.advproject.link.cpp.exe.debug.1230329092" name="MCU C++ Linker" superClass="com.crt.advproject.link.cpp.exe.debug">
+<<<<<<< Updated upstream
 								<option id="com.crt.advproject.link.cpp.hdrlib.1172106052" superClass="com.crt.advproject.link.cpp.hdrlib"/>
+=======
+								<option id="com.crt.advproject.link.cpp.hdrlib.967654291" superClass="com.crt.advproject.link.cpp.hdrlib"/>
+>>>>>>> Stashed changes
 							</tool>
 							<tool id="com.crt.advproject.link.exe.debug.1059891165" name="MCU Linker" superClass="com.crt.advproject.link.exe.debug">
 								<option id="com.crt.advproject.link.thumb.626479465" name="Thumb mode" superClass="com.crt.advproject.link.thumb" value="true" valueType="boolean"/>
@@ -70,7 +79,11 @@
 								</option>
 								<option id="com.crt.advproject.link.gcc.hdrlib.2017260383" name="Library" superClass="com.crt.advproject.link.gcc.hdrlib" value="com.crt.advproject.gcc.link.hdrlib.codered.none" valueType="enumerated"/>
 								<option id="com.crt.advproject.link.crpenable.593593502" superClass="com.crt.advproject.link.crpenable" value="true" valueType="boolean"/>
+<<<<<<< Updated upstream
 								<option id="com.crt.advproject.link.gcc.multicore.slave.412307409" superClass="com.crt.advproject.link.gcc.multicore.slave"/>
+=======
+								<option id="com.crt.advproject.link.gcc.multicore.slave.1835795023" superClass="com.crt.advproject.link.gcc.multicore.slave"/>
+>>>>>>> Stashed changes
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.2039077036" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
