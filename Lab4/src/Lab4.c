@@ -87,6 +87,9 @@ int read_temperature()
     //Now that the temperature is ready to be read, read it in
     msb = I2C_read(FALSE);
     lsb = I2C_read(TRUE);
+
+    //Release control of I2C
+    I2C_stop();
     
     //Combine the bits, making sure to disregard the 5 most least significant bits of LSB
     temp = (msb << 3) + (lsb >> 5);
