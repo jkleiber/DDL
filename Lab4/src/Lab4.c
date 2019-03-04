@@ -8,10 +8,22 @@
 #define I2C_FEED() I2C_CONCLR = (1<<3); while(((I2C_CONSET>>3) & 1) == 0){}
 #define I2STAT (*(volatile int *)0x4001C004)
 #define ISER (*(volatile int *) 0xE000E100)
+#define PCLKSEL0 (*(volatile int *)0x400FC1AB)
+#define IODIRA 0x0
+#define IODIRB 0x1
 #define LM75ADDR 0x48
 #define MCPADDR 0x20
 #define READ 1
 #define WRITE 0
+#define TRUE 1
+#define FALSE 0
+#define CELSIUS 0
+#define FARENHEIT 1
+#define LEFT 0x13
+#define RIGHT 0x12
+
+/* Global variables */
+int mode = FARENHEIT;
 
 int stat;
 
@@ -31,8 +43,9 @@ void I2C_init(void)
 void I2C_start(void)
 {
     I2C_CONSET = 1<<3;
-    I2C_CONSET = 1<<5;
+    I2C_CONSET |= 1<<5;
     I2C_FEED();
+    I2C_CONCLR = 1<<5;
 }
 
 void I2C_write(int data)
@@ -70,40 +83,150 @@ void I2C_interrupt(void)
 //    ISER |= 1<<10;
 }
 
-void I2C_bank(void)
+void MCP_bank(void)
 {
     I2C_start();
-    I2C_write(MCPADDR<<1 & 0);
+    I2C_write(MCPADDR<<1);
+    I2C_start();
     I2C_write(0x0A);
     I2C_start();
-    I2C_write(0x80);
+    I2C_write(0x20);
     I2C_stop();
 }
 
-void write_Num(int num)
+void MCP_DIR(void)
 {
-    stat = I2C_STAT;
+    I2C_start();
+    I2C_write(MCPADDR<<1);
+    //I2C_start();
+    I2C_write(IODIRA);
+    //I2C_start();
+    I2C_write(0x00);
+    I2C_start();
+    I2C_write(MCPADDR<<1);
+    //I2C_start();
+    I2C_write(IODIRB);
+    //I2C_start();
+    I2C_write(0x00);
+    I2C_stop();
+}
+
+void write_Num(int num, int side)
+{
     //Write to MCPADDR
     I2C_start();
-    stat = I2C_STAT;
-    I2C_write(MCPADDR<<1 & 0);
-    stat = I2C_STAT;
-    I2C_write(0x12);
-    stat = I2C_STAT;
-    I2C_start();
-    stat = I2C_STAT;
-    if(num == 0)
+    I2C_write(MCPADDR<<1);
+    I2C_write(side);
+
+    switch(num)
     {
-        I2C_write(0b1111);
+        default:
+            I2C_write(0);
+            break;
+        case 0:
+            I2C_write(0b111111);
+            break;
+        case 1:
+            I2C_write(0b0000110);
+            break;
+        case 2:
+            I2C_write(0b1011011);
+            break;
+        case 3:
+            I2C_write(0b1001111);
+            break;
+        case 4:
+            I2C_write(0b1100110);
+            break;
+        case 5:
+            I2C_write(0b1101101);
+            break;
+        case 6:
+            I2C_write(0b1111101);
+            break;
+        case 7:
+            I2C_write(0b0000111);
+            break;
+        case 8:
+            I2C_write(0b1111111);
+            break;
+        case 9:
+            I2C_write(0b1100111);
+            break;
     }
     I2C_stop();
+}
+
+int read_temperature()
+{
+    //Declare local variables
+    float temperature = 0.0f;
+    int temp = 0;
+    int msb = 0;
+    int lsb = 0;
+
+    //Start I2C transmission
+    I2C_start();
+
+    //Notify temperature sensor of write operation (to select correct register)
+    I2C_write(LM75ADDR << 1);
+
+    //Select temperature register 0
+    I2C_write(0);
+
+    //Start up for the read operation
+    I2C_start();
+
+    //Notify temperature sensor of impending read operation
+    I2C_write((LM75ADDR << 1) | READ);
+
+    //Now that the temperature is ready to be read, read it in
+    msb = I2C_read(FALSE);
+    lsb = I2C_read(TRUE);
+
+    //Release control of I2C
+    I2C_stop();
+    
+    //Combine the bits, making sure to disregard the 5 most least significant bits of LSB
+    temp = (msb << 3) | (lsb >> 5);
+
+    //Calculate the temperature value in celsius
+    //If the value is negative...
+    if((msb >> 7) & 1)
+    {
+        //Take the two's complement of temperature and convert to celsius
+        temp = ~(temp) + 1;
+        temperature = (-temp) * 0.125;
+    }
+    //If the value is positive, just multiply by 0.125
+    else
+    {
+        temperature = temp * 0.125;
+    }
+    
+    //Determine if a temperature conversion is needed
+    if(mode == FARENHEIT)
+    {
+        temperature = ((9.0 / 5.0) * temperature) + 32.0;
+    }
+
+    //Return an integer version of temeperature, rounded up to the nearest ones place.
+    return (int)(temperature + 0.5);
+}
+
+write_big_num(int temp)
+{
+    int tens = temp / 10;
+    write_Num(tens,LEFT);
+    int ones = temp % 10;
+    write_Num(ones,RIGHT);
 }
 
 int main(void) 
 {
     //Set SCL and SDA0 on PINSEL1
     PINSEL1 |= (1<<22) | (1<<24);
-    
+    PCLKSEL0 |= (1<<14);    
     //Configure I2C Frequency
     I2C_SCLL = 5;
     I2C_SCLH = 5;
@@ -111,11 +234,18 @@ int main(void)
     I2C_interrupt();
     //Initialize I2C
     I2C_init();
-    I2C_bank();
+    MCP_bank();
+    MCP_DIR();
+
+    int temperature;
 
     while(1)
     {
-        write_Num(0);
+        I2C_start();
+        I2C_write(MCPADDR<<1 | 1);
+        //I2C_start();
+        stat = I2C_read(IODIRA);
+        temperature = read_temperature();
+        write_big_num(temperature);
     }
-
 }
