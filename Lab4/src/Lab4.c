@@ -9,20 +9,16 @@
 #define ISER (*(volatile int *) 0xE000E100)
 #define PCLKSEL0 (*(volatile int *)0x400FC1AB)
 
-
 //I2C macros
 #define I2C_FEED() I2C_CONCLR = (1<<3); while(((I2C_CONSET>>3) & 1) == 0){}     //wait for bus to be available
-
 
 //GPIO registers
 #define FIO2DIR (*(volatile int *) 0x2009C040)
 #define FIO2PIN (*(volatile int *) 0x2009C054)
 
-
 //Logical operators
 #define TRUE 1
 #define FALSE 0
-
 
 //I2C addresses and registers
 #define IODIRA 0x0      //address of IODIRA on MCP
@@ -32,18 +28,15 @@
 #define LEFT 0x13       //register of GPIO for left display
 #define RIGHT 0x12      //register of GPIO for right display
 
-
 //Program constants
 #define READ 1          //read data bit
 #define WRITE 0         //write data bit
 #define CELSIUS 0       //celsius mode
 #define FARENHEIT 1     //farenheit mode
 
-
 /* Global variables */
 int mode = CELSIUS;     //units to operate in
 int stat;               //debugging variable for reading I2C_STAT
-
 
 /**
  * @brief Wait a number of cycles before proceeding with code execution
@@ -57,7 +50,6 @@ void wait_ticks(int count)
         ticks--;
 }
 
-
 /**
  * @brief Sets up the I2C device as master
  * 
@@ -66,7 +58,6 @@ void I2C_init(void)
 {
     I2C_CONSET = 0x40;
 }
-
 
 /**
  * @brief Start I2C communication
@@ -83,7 +74,6 @@ void I2C_start(void)
     I2C_CONCLR = 1<<5;
 }
 
-
 /**
  * @brief Write a value to the bus
  * 
@@ -95,7 +85,6 @@ void I2C_write(int data)
     I2C_DAT = data;
     I2C_FEED();
 }
-
 
 /**
  * @brief Reads the next byte off of I2C, and sends back ACK or NACK appropriately
@@ -123,7 +112,6 @@ int I2C_read(int stop)
     return data;
 }
 
-
 /**
  * @brief: releases control of the I2C bus
  * 
@@ -135,7 +123,6 @@ void I2C_stop(void)
     while(I2C_CONSET>>4 & 1)
     {}
 }
-
 
 /**
  * @brief: sets the bank bit and SEQOP bits to the ideal values
@@ -159,7 +146,6 @@ void MCP_bank(void)
     I2C_stop();
 }
 
-
 /**
  * @brief: sets the GPIOs on the MCP as outputs
  * 
@@ -181,7 +167,6 @@ void MCP_DIR(void)
     //Release control of the I2C
     I2C_stop();
 }
-
 
 /**
  * @brief: Writes a number to one of the seven segment displays
@@ -237,7 +222,6 @@ void write_Num(int num, int side)
     //End communication with the MCP chip
     I2C_stop();
 }
-
 
 /**
  * @brief: Reads the temperature from the LM75 sensor over I2C
@@ -301,7 +285,6 @@ int read_temperature()
     return (int)(temperature + 0.5);
 }
 
-
 /**
  * @brief: writes a two digit number to two seven segment displays
  * 
@@ -317,7 +300,6 @@ void write_big_num(int temp)
     int ones = temp % 10;
     write_Num(ones,RIGHT);
 }
-
 
 /**
  * @brief: Main function for initializing devices and running main logic loop
