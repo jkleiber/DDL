@@ -22,8 +22,11 @@
 #define LEFT 0x13
 #define RIGHT 0x12
 
+#define FIO2DIR (*(volatile int *) 0x2009C040)
+#define FIO2PIN (*(volatile int *) 0x2009C054)
+
 /* Global variables */
-int mode = FARENHEIT;
+int mode = CELSIUS;
 
 int stat;
 
@@ -44,6 +47,7 @@ void I2C_start(void)
 {
     I2C_CONSET = 1<<3;
     I2C_CONSET |= 1<<5;
+
     I2C_FEED();
     I2C_CONCLR = 1<<5;
 }
@@ -121,37 +125,37 @@ void write_Num(int num, int side)
     switch(num)
     {
         default:
-            I2C_write(0);
+            I2C_write(0x0);
             break;
         case 0:
-            I2C_write(0b111111);
+            I2C_write(0b10111110);
             break;
         case 1:
             I2C_write(0b0000110);
             break;
         case 2:
-            I2C_write(0b1011011);
+            I2C_write(0b11011010);
             break;
         case 3:
-            I2C_write(0b1001111);
+            I2C_write(0b11001111);
             break;
         case 4:
-            I2C_write(0b1100110);
+            I2C_write(0b01100110);
             break;
         case 5:
-            I2C_write(0b1101101);
+            I2C_write(0b11101100);
             break;
         case 6:
-            I2C_write(0b1111101);
+            I2C_write(0b11111100);
             break;
         case 7:
-            I2C_write(0b0000111);
+            I2C_write(0b10000110);
             break;
         case 8:
-            I2C_write(0b1111111);
+            I2C_write(0b11111111);
             break;
         case 9:
-            I2C_write(0b1100111);
+            I2C_write(0b11101110);
             break;
     }
     I2C_stop();
@@ -214,7 +218,7 @@ int read_temperature()
     return (int)(temperature + 0.5);
 }
 
-write_big_num(int temp)
+void write_big_num(int temp)
 {
     int tens = temp / 10;
     write_Num(tens,LEFT);
@@ -223,8 +227,7 @@ write_big_num(int temp)
 }
 
 int main(void) 
-{
-    //Set SCL and SDA0 on PINSEL1
+{    //Set SCL and SDA0 on PINSEL1
     PINSEL1 |= (1<<22) | (1<<24);
     PCLKSEL0 |= (1<<14);    
     //Configure I2C Frequency
@@ -237,15 +240,28 @@ int main(void)
     MCP_bank();
     MCP_DIR();
 
+    //Make P2.12 an input
+    FIO2PIN &= ~(1 << 12);
+
     int temperature;
+    int i;
 
     while(1)
     {
-        I2C_start();
-        I2C_write(MCPADDR<<1 | 1);
-        //I2C_start();
-        stat = I2C_read(IODIRA);
-        temperature = read_temperature();
+        for(i = 0; i < 100; ++i)
+        {
+            temperature += read_temperature();
+        }
+        temperature /= 100;
+        
         write_big_num(temperature);
+
+        if((FIO2PIN >> 12) & 1)
+        {
+            mode = mode == CELSIUS ? FARENHEIT : CELSIUS;
+
+            wait_ticks(8000);
+            while((FIO2PIN >> 12) & 1){}
+        }
     }
 }
