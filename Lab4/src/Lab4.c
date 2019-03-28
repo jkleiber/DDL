@@ -7,7 +7,7 @@
 #define I2C_DAT (*(volatile int *)0x4001C008)
 #define I2C_STAT (*(volatile int *)0x4001C004)
 #define ISER (*(volatile int *) 0xE000E100)
-#define PCLKSEL0 (*(volatile int *)0x400FC1AB)
+#define PCLKSEL0 (*(volatile int *)0x400FC1A8)
 
 
 //I2C macros

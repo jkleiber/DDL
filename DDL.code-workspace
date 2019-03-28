@@ -1,20 +1,23 @@
 {
 	"folders": [
-		{
-			"path": "Lab1"
-		},
-		{
-			"path": "Lab2"
-		},
-		{
-			"path": "ClassNotes"
-		},
-		{
-			"path": "Lab3"
-		},
-		{
-			"path": "Lab4"
-		}
-	],
+        {
+            "path": "Lab1"
+        },
+        {
+            "path": "Lab2"
+        },
+        {
+            "path": "ClassNotes"
+        },
+        {
+            "path": "Lab3"
+        },
+        {
+            "path": "Lab4"
+        },
+        {
+            "path": "Lab5"
+        }
+    ],
     "settings": {}
 }
