@@ -17,6 +17,9 @@
         },
         {
             "path": "Lab5"
+        },
+        {
+            "path": "Pong"
         }
     ],
     "settings": {}
