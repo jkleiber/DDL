@@ -2,9 +2,26 @@
 #define REGISTER_DEFS_H
 
 //GPIO
+typedef struct GPIO_regs_t
+{
+    volatile unsigned int FIODIR;
+    int rsvd[3];
+    volatile unsigned int FIOMASK;
+    volatile unsigned int FIOPIN;
+    volatile unsigned int FIOSET;
+    volatile unsigned int FIOCLR;
+
+} GPIO_regs;
+
+//Define FIO
+#define FIO ((GPIO_regs *)0x2009c000)
 
 //PINMODE
-#define PINMODE1 (*(volatile int *) 0x4002C044)
+#define PINMODE0 (*(volatile int *)0x4002C040)
+#define PINMODE1 (*(volatile int *)0x4002C044)
+#define PINMODE2 (*(volatile int *)0x4002C048)
+#define PINMODE3 (*(volatile int *)0x4002C04C)
+#define PINMODE4 (*(volatile int *)0x4002C050)
 
 //PINSEL
 #define PINSEL0 (*(volatile int *) 0x4002C000)
