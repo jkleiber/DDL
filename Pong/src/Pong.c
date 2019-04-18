@@ -46,7 +46,7 @@ int main(void)
     //Initialize SPI
     spi_setup();
     spi_master();
-    
+
     //Run the program infinitely
     while(1) 
     {
