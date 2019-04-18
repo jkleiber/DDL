@@ -73,7 +73,7 @@ unsigned int gpio_bus_in_read(const int *ports, const int *pins, int num_pins)
     //Iterate through each port/pin combo and read data
     for (int i = 0; i < num_pins; ++i)
     {
-        state = read_single(ports[i], pins[i]);
+        state = gpio_read_single(ports[i], pins[i]);
 
         //If the pin value is HIGH, set this bit to 1
         if (state)

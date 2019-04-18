@@ -6,23 +6,24 @@
 #include "pong_lcd.h"
 #include "register_defs.h"
 #include "SPI.h"
+#include "wait_code.h"
 
 //Program constants
-#define BALL_SIZE       2
-#define BALL_SPEED      2
+#define BALL_SIZE       3
+#define BALL_SPEED      1
 #define PADDLE_SPEED    1
 #define PADDLE_LENGTH   10
-#define PADDLE_WIDTH    3
+#define PADDLE_WIDTH    2
 
 //Variables for pong paddle tracking
-int paddle1_x = 5;
+int paddle1_x = 3;
 int paddle1_y = 20;
 int paddle2_x = 79;
 int paddle2_y = 20;
 
 //Variables for pong ball tracking
-int ball_x = 24;
-int ball_y = 42;
+int ball_x = 42;
+int ball_y = 24;
 int ball_x_spd = BALL_SPEED;
 int ball_y_spd = BALL_SPEED;
 
@@ -69,15 +70,19 @@ int main(void)
         //TODO: Make sound if needed
 
         //Clear the display
-        draw_clear();
+        clear_screen();
 
+        //spi_write(0xD, LCD_SPI_CS_PORT, LCD_SPI_CS_PIN, LOW);
         //Update display
         draw_rect(paddle1_x, paddle1_y, PADDLE_LENGTH, PADDLE_WIDTH);
-        draw_rect(paddle2_x, paddle2_y, PADDLE_LENGTH, PADDLE_WIDTH);
         draw_rect(ball_x, ball_y, BALL_SIZE, BALL_SIZE);
+        draw_rect(paddle2_x, paddle2_y, PADDLE_LENGTH, PADDLE_WIDTH);
+
+        //Paint the updates to the screen
+        draw_screen();
 
         //Slow down the run so the game is playable
-        wait_ticks(1000);   //TODO: tune this value
+        wait_ticks(500000);
     }
 
     return 0;

@@ -8,11 +8,13 @@
 
 void lcd_start();
 
+void clear_screen();
+
 void draw_rect(int x, int y, int height, int width);
 
 void draw_score(int p1_score, int p2_score);
 
-void draw_clear();
+void draw_screen();
 
 //TODO: add any other draw functions needed
 

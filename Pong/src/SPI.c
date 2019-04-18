@@ -9,8 +9,8 @@ void spi_setup()
     PCLKSEL0 |= (1 << 16);
 
     //Configure SPI output
-    PINSEL1 |= (3) | (3 << 2) | (3 << 4);   //Configure SSEL, MISO, MOSI respectively
-    PINSEL0 |= (3 << 30);                   //Configure SCK
+    PINSEL1 |= (3 << 4);    //Configure MOSI
+    PINSEL0 |= (3 << 30);   //Configure SCK
 }
 
 
@@ -69,7 +69,7 @@ int spi_write(int data, int cs_port, int cs_pin, int active)
     SPI_DAT = data;
 
     //Wait for SPIF bit in SPI status register to be 1
-    while(((SPI_STAT>>1) & 1) == 0){}
+    while(((SPI_STAT>>7) & 1) == 0){}
 
     //TODO: read the SPI status register
 
