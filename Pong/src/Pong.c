@@ -16,20 +16,35 @@
 #define PADDLE_WIDTH    2
 
 //Variables for pong paddle tracking
-int paddle1_x = 3;
-int paddle1_y = 20;
-int paddle2_x = 79;
-int paddle2_y = 20;
+volatile int paddle1_x = 3;
+volatile int paddle1_y = 20;
+volatile int paddle2_x = 79;
+volatile int paddle2_y = 20;
 
 //Variables for pong ball tracking
-int ball_x = 42;
-int ball_y = 24;
-int ball_x_spd = BALL_SPEED;
-int ball_y_spd = BALL_SPEED;
+volatile int ball_x = 40;
+volatile int ball_y = 24;
+volatile int ball_x_spd = BALL_SPEED;
+volatile int ball_y_spd = BALL_SPEED;
 
 
-//TODO: Collision detection
+//Collision detection
+void check_collision()
+{
+    //Bounce off the wall
+    if((ball_y + BALL_SIZE) >= MAX_ROW || ball_y <= 0)
+    {
+        ball_y_spd = -ball_y_spd;
+    }
 
+    //Bounce off the paddles
+    if((ball_x == (paddle1_x + PADDLE_WIDTH) && (ball_y >= paddle1_y && ball_y < (paddle1_y + PADDLE_LENGTH)))
+    || ((ball_x + BALL_SIZE) == paddle2_x && (ball_y >= paddle2_y && ball_y < (paddle2_y + PADDLE_LENGTH))))
+    {
+        ball_x_spd = -ball_x_spd;
+    }
+    
+}
 
 //TODO: Goal detection
 
@@ -59,16 +74,21 @@ int main(void)
     //Run the program infinitely
     while(1) 
     {
+        /** UPDATE FUNCTIONS **/
+        //Check for collisions
+        check_collision();
+
         //Update the locations of the ball
         ball_x += ball_x_spd;
         ball_y += ball_y_spd;
 
-        //TODO: Detect collisions and goals
+        //TODO: Detect goals
 
         //TODO: Change ball physics if needed
 
         //TODO: Make sound if needed
 
+        /** DISPLAY LOGIC **/
         //Clear the display
         clear_screen();
 
@@ -78,11 +98,14 @@ int main(void)
         draw_rect(ball_x, ball_y, BALL_SIZE, BALL_SIZE);
         draw_rect(paddle2_x, paddle2_y, PADDLE_LENGTH, PADDLE_WIDTH);
 
+        //Test the screen
+        //draw_checkers();
+
         //Paint the updates to the screen
         draw_screen();
 
         //Slow down the run so the game is playable
-        wait_ticks(500000);
+        wait_ticks(1000);
     }
 
     return 0;
