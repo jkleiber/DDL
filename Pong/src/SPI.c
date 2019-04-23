@@ -17,7 +17,7 @@ void spi_setup()
 void spi_master()
 {
     //Set the SPI clock frequency to be greater or equal to 8
-    SPI_CLK_CNT = 8;
+    SPI_CLK_CNT = 16;
 
     //Set this SPI device as master
     SPI_CON |= (1 << 5);

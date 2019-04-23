@@ -1,7 +1,7 @@
 #include "pong_lcd.h"
 
 //Screen data
-int screen[48][84];
+int screen[SCREEN_HEIGHT][SCREEN_WIDTH];
 
 void lcd_start()
 {
@@ -9,11 +9,16 @@ void lcd_start()
     spi_set_polarity(0);    //the clock idles at low
     spi_set_phase(0);       //the LCD samples data on the leading edge of CLK
 
+    //Reset the board
+    gpio_write_single(LCD_RES_PORT, LCD_RES_PIN, LOW);
+    wait_ticks(1000);
+    gpio_write_single(LCD_RES_PORT, LCD_RES_PIN, HIGH);
+
     //Set up the display!
     spi_write(0x21, LCD_SPI_CS_PORT, LCD_SPI_CS_PIN, LOW);  //Notify about extended instruction set
     spi_write(0xB0, LCD_SPI_CS_PORT, LCD_SPI_CS_PIN, LOW);  //Set Vop
     spi_write(0x04, LCD_SPI_CS_PORT, LCD_SPI_CS_PIN, LOW);  //Set temperature coeff
-    spi_write(0x13, LCD_SPI_CS_PORT, LCD_SPI_CS_PIN, LOW);  //LCD bias mode
+    spi_write(0x14, LCD_SPI_CS_PORT, LCD_SPI_CS_PIN, LOW);  //LCD bias mode
     
     //Modify display mode
     spi_write(0x20, LCD_SPI_CS_PORT, LCD_SPI_CS_PIN, LOW);  //Control byte
@@ -23,9 +28,9 @@ void lcd_start()
 void clear_screen()
 {
     //Set screen bits to 0
-    for(int col = 0; col < 83; ++col)
+    for(int col = 0; col < SCREEN_WIDTH; ++col)
     {
-        for(int row = 0; row < 47; ++row)
+        for(int row = 0; row < SCREEN_HEIGHT; ++row)
         {
             screen[row][col] = 0;
         }
@@ -35,7 +40,7 @@ void clear_screen()
 void draw_rect(int x, int y, int height, int width)
 {
     //Don't draw anything if it is out of bounds
-    if(x < 0 || (x + width) > 83 || y < 0 || (y + height) > 47)
+    if(x < 0 || (x + width) > MAX_COL || y < 0 || (y + height) > MAX_ROW)
     {
         return;
     }
@@ -51,10 +56,35 @@ void draw_rect(int x, int y, int height, int width)
 }
 
 
+void draw_test()
+{
+    for(int col = 0; col < SCREEN_WIDTH; col += 6)
+    {
+        for(int row = 0; row < SCREEN_HEIGHT; ++row)
+        {
+            screen[row][col] = 1;
+        }
+    }
+}
+
 
 void draw_score(int p1_score, int p2_score)
 {
 
+}
+
+void draw_checkers()
+{
+    for(int c = 0; c < SCREEN_WIDTH; ++c)
+    {
+        for(int r = 0; r < SCREEN_HEIGHT; ++r)
+        {
+            if((c % 2) == (r % 2))
+            {
+                screen[r][c] = 1;
+            }
+        }
+    }
 }
 
 
@@ -68,22 +98,22 @@ void draw_screen()
     int row;
 
     //Go through each bank of Y bits layer by layer (column by column)
-    for(col = 0; col < 83; ++col)
+    for(col = 0; col < SCREEN_WIDTH; ++col)
     {
-        /** Set X RAM address **/
-        //Reset the D/C pin
-        gpio_write_single(LCD_DC_PORT, LCD_DC_PIN, LOW);
-
-        //Determine the byte sequence
-        cmd = 1 << 7;
-        cmd |= col;
-
-        //Send the SPI command
-        spi_write(cmd, LCD_SPI_CS_PORT, LCD_SPI_CS_PIN, LOW);
-
         //Go through the six banks
         for(bank = 0; bank < 6; ++bank)
         {
+            /** Set X RAM address **/
+            //Reset the D/C pin
+            gpio_write_single(LCD_DC_PORT, LCD_DC_PIN, LOW);
+
+            //Determine the byte sequence
+            cmd = 1 << 7;
+            cmd |= col;
+
+            //Send the SPI command
+            spi_write(cmd, LCD_SPI_CS_PORT, LCD_SPI_CS_PIN, LOW);
+
             //Write to the Y RAM to choose this bank
             cmd = 1 << 6;                                           //set DB6
             cmd |= bank;                                            //choose the bank
