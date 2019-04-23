@@ -11,7 +11,7 @@
 //Program constants
 #define BALL_SIZE       3
 #define BALL_SPEED      1
-#define PADDLE_SPEED    1
+#define PADDLE_SPEED    3
 #define PADDLE_LENGTH   10
 #define PADDLE_WIDTH    2
 #define BALL_X_START    40
@@ -41,17 +41,28 @@ volatile int goal_timer;
 //Game state
 int game_state;
 
-void EINT0_IRQHandler(void)
+void EINT3_IRQHandler(void)
 {
+    int status = IOIntStatus;
     if(IOIntStatus != 0)
     {
+        IO0IntClr |= (0b11 << 27);
+        IO0IntClr |= (0b11 <<2);
         if((IO0IntStatF>>27 & 1) && !(gpio_read_single(0, 28)))
         {
-            p1pos++;
+            paddle1_y+=PADDLE_SPEED;
         }
-        else if ((IO0IntStatF>>28 & 1) && !(gpio_read_single(0, 27)))
+        else if ((IO0IntStatF>>27 & 1) && (gpio_read_single(0, 28)))
         {
-            p1pos--;
+            paddle1_y-=PADDLE_SPEED;
+        }
+        if((IO0IntStatF>>2 & 1) && !(gpio_read_single(0, 3)))
+        {
+            paddle2_y+=PADDLE_SPEED;
+        }
+        else if ((IO0IntStatF>>2 & 1) && (gpio_read_single(0, 3)))
+        {
+            paddle2_y-=PADDLE_SPEED;
         }
     }
 }
@@ -112,7 +123,9 @@ int main(void)
     //Quadrature Encoders on GPIO interrupts
     IO0IntEnF |= (0b11 << 27);
     IO0IntClr |= (0b11 << 27);
-    ISER0 |= (1<<18);
+    IO0IntEnF |= (0b11 << 2);
+    IO0IntClr |= (0b11 << 2);
+    ISER0 |= (1<<21);
 
     //Wait some time so the RES is applied
     wait_ticks(10000);
