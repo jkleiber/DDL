@@ -46,8 +46,20 @@ void check_collision()
     
 }
 
-//TODO: Goal detection
+//Goal detection
+void check_goal()
+{
+    //Did player 1 score?
+    if(ball_x > SCREEN_WIDTH)
+    {
 
+    }
+    //Did player 2 score?
+    else if((ball_x + BALL_SIZE) < 0)
+    {
+
+    }
+}
 
 int main(void) 
 {
