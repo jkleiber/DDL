@@ -89,3 +89,54 @@ unsigned int gpio_bus_in_read(const int *ports, const int *pins, int num_pins)
 
     return output;
 }
+
+
+/* int read_encoder(void)
+{
+    int seqA = 0;
+    int seqB = 0;
+    int left = 0;
+    int right = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        int A_val = EXTINT &= 1;
+        int B_val = EXTINT &= 0b10;
+        
+        // Record the A and B signals in seperate sequences
+        seqA <<= 1;
+        seqA |= A_val;
+        
+        seqB <<= 1;
+        seqB |= B_val;
+        
+        // Mask the MSB four bits
+        seqA &= 0b00001111;
+        seqB &= 0b00001111;
+        
+        // Compare the recorded sequence with the expected sequence
+        if (seqA == 0b00001001 && seqB == 0b00000011) {
+        //cnt1++;
+        left = 1;
+        }
+        
+        if (seqA == 0b00000011 && seqB == 0b00001001) {
+        //cnt2++;
+        right = 1;
+        }
+    }
+    if(left == 1)
+    {
+        return 1;
+    }
+    else if (right == 1)
+    {
+        return 2;
+    }
+    else
+    {
+        return 0;
+    }
+
+}
+*/
+
