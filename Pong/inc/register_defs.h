@@ -39,7 +39,7 @@ typedef struct GPIO_regs_t
 #define SPI_DAT (*(volatile int *) 0x40020008)
 #define SPI_CLK_CNT (*(volatile int *) 0x4002000C)
 
-//GPIO
+//GPIO interrupts
 #define IO0IntEnR (*(volatile int *) 0x40028090)
 #define IO0IntEnF (*(volatile int *) 0x40028094)
 #define IO0IntStatF (*(volatile int *) 0x40028088)

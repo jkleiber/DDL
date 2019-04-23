@@ -14,19 +14,32 @@
 #define PADDLE_SPEED    1
 #define PADDLE_LENGTH   10
 #define PADDLE_WIDTH    2
+#define BALL_X_START    40
+#define BALL_Y_START    24
+#define P1_X_START      3
+#define P1_Y_START      20
+#define P2_X_START      79
+#define P2_Y_START      20
+#define GOAL_TIME       100000
 
 //Variables for pong paddle tracking
-volatile int paddle1_x = 3;
-volatile int paddle1_y = 20;
-volatile int paddle2_x = 79;
-volatile int paddle2_y = 20;
+volatile int paddle1_x = P1_X_START;
+volatile int paddle1_y = P1_Y_START;
+volatile int paddle2_x = P2_X_START;
+volatile int paddle2_y = P2_Y_START;
 
 //Variables for pong ball tracking
-volatile int ball_x = 40;
-volatile int ball_y = 24;
+volatile int ball_x = BALL_X_START;
+volatile int ball_y = BALL_Y_START;
 volatile int ball_x_spd = BALL_SPEED;
 volatile int ball_y_spd = BALL_SPEED;
 volatile int p1pos = 0;
+
+//Variables for goal screen
+volatile int goal_timer;
+
+//Game state
+int game_state;
 
 void EINT0_IRQHandler(void)
 {
@@ -40,14 +53,19 @@ void EINT0_IRQHandler(void)
         {
             p1pos--;
         }
+    }
+}
 
 //Collision detection
 void check_collision()
 {
+    int sound = FALSE;
+
     //Bounce off the wall
     if((ball_y + BALL_SIZE) >= MAX_ROW || ball_y <= 0)
     {
         ball_y_spd = -ball_y_spd;
+        sound = TRUE;
     }
 
     //Bounce off the paddles
@@ -55,22 +73,29 @@ void check_collision()
     || ((ball_x + BALL_SIZE) == paddle2_x && (ball_y >= paddle2_y && ball_y < (paddle2_y + PADDLE_LENGTH))))
     {
         ball_x_spd = -ball_x_spd;
+        sound = TRUE;
     }
-    
+
+    //TODO: Make sound if needed (DMA?)
+    if(sound)
+    {
+
+    }
 }
 
 //Goal detection
 void check_goal()
 {
+    //TODO: Add goal sound effect
     //Did player 1 score?
     if(ball_x > SCREEN_WIDTH)
     {
-
+        game_state = P1_GOAL;
     }
     //Did player 2 score?
     else if((ball_x + BALL_SIZE) < 0)
     {
-
+        game_state = P2_GOAL;
     }
 }
 
@@ -79,9 +104,12 @@ int main(void)
     //Reset the LCD immediately
     gpio_write_single(LCD_RES_PORT, LCD_RES_PIN, LOW); //RESET pin (P2.7)(49)
 
+    //Initialize goal variables
+    goal_timer = 0;
+
     //TODO: Set up the audio output (DMA) and the sound effects
 
-    //TODO: Quadrature Encoders on GPIO interrupts
+    //Quadrature Encoders on GPIO interrupts
     IO0IntEnF |= (0b11 << 27);
     IO0IntClr |= (0b11 << 27);
     ISER0 |= (1<<18);
@@ -103,31 +131,57 @@ int main(void)
     while(1) 
     {
         /** UPDATE FUNCTIONS **/
-        //Check for collisions
-        check_collision();
+        //Goal updates
+        if((game_state == P1_GOAL) || (game_state == P2_GOAL))
+        {
+            //Reset positions
+            ball_x = BALL_X_START;
+            ball_y = BALL_Y_START;
+            paddle1_x = P1_X_START;
+            paddle1_y = P1_Y_START;
+            paddle2_x = P2_X_START;
+            paddle2_y = P2_Y_START;
+            
+            //Increment goal timer
+            ++goal_timer;
 
-        //Update the locations of the ball
-        ball_x += ball_x_spd;
-        ball_y += ball_y_spd;
+            if(goal_timer >= GOAL_TIME)
+            {
+                game_state = PLAYING;
+                goal_timer = 0;
+            }
+        }
+        //Normal play updates
+        else if(game_state == PLAYING)
+        {
+            //Check for collisions
+            check_collision();
 
-        //TODO: Detect goals
+            //Detect goals
+            check_goal();
 
-        //TODO: Change ball physics if needed
-
-        //TODO: Make sound if needed
+            //Update the locations of the ball
+            ball_x += ball_x_spd;
+            ball_y += ball_y_spd;
+        }   
 
         /** DISPLAY LOGIC **/
         //Clear the display
         clear_screen();
 
-        //spi_write(0xD, LCD_SPI_CS_PORT, LCD_SPI_CS_PIN, LOW);
-        //Update display
-        draw_rect(paddle1_x, paddle1_y, PADDLE_LENGTH, PADDLE_WIDTH);
-        draw_rect(ball_x, ball_y, BALL_SIZE, BALL_SIZE);
-        draw_rect(paddle2_x, paddle2_y, PADDLE_LENGTH, PADDLE_WIDTH);
+        //Draw a goal animation if someone scores
+        if((game_state == P1_GOAL) || (game_state == P2_GOAL))
+        {
 
-        //Test the screen
-        //draw_checkers();
+        }
+        else if(game_state == PLAYING)
+        {
+            //spi_write(0xD, LCD_SPI_CS_PORT, LCD_SPI_CS_PIN, LOW);
+            //Update display
+            draw_rect(paddle1_x, paddle1_y, PADDLE_LENGTH, PADDLE_WIDTH);
+            draw_rect(ball_x, ball_y, BALL_SIZE, BALL_SIZE);
+            draw_rect(paddle2_x, paddle2_y, PADDLE_LENGTH, PADDLE_WIDTH);
+        }
 
         //Paint the updates to the screen
         draw_screen();
