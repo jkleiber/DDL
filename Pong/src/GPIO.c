@@ -1,12 +1,6 @@
 #include "GPIO.h"
 
 
-unsigned int read_interrupt(const int port, const int pin)
-{
-    return ((IO0IntEnR >> pin) & 1);
-}
-
-
 /**
  * write_single - Function that writes to a single port and pin combination
  */
@@ -96,35 +90,6 @@ unsigned int gpio_bus_in_read(const int *ports, const int *pins, int num_pins)
     return output;
 }
 
-void init(void)
-{
- //   EXTMODE |= 0b1111;
- //   EXTPOLAR |= 0b1111;
-
-    IO0IntEnF |= (0b11 << 25);
-    IO0IntClr |= (0b11 <<25);
-    ISER0 = (1<<18);
-}
-
-int EINT0_IRQHandler(void)
-{
-    if(IOIntStatus & 1)
-    {
-        if((IO0IntStatF>>25 & 1) && !(gpio_read_single(0, 26)))
-        {
-            return 1;
-        }
-        else if ((IO0IntStatF>>26 & 1) && !(gpio_read_single(0, 25)))
-        {
-            return 2;
-        }
-        else
-        {
-            return 0;
-        }
-        
-    }
-}
 
 /* int read_encoder(void)
 {

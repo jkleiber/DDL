@@ -26,8 +26,23 @@ int ball_x = 42;
 int ball_y = 24;
 int ball_x_spd = BALL_SPEED;
 int ball_y_spd = BALL_SPEED;
+volatile int p1pos = 0;
 
+void EINT0_IRQHandler(void)
+{
+    if(IOIntStatus != 0)
+    {
+        if((IO0IntStatF>>27 & 1) && !(gpio_read_single(0, 28)))
+        {
+            p1pos++;
+        }
+        else if ((IO0IntStatF>>28 & 1) && !(gpio_read_single(0, 27)))
+        {
+            p1pos--;
+        }
 
+    }
+}
 //TODO: Collision detection
 
 
@@ -42,6 +57,9 @@ int main(void)
     //TODO: Set up the audio output (DMA) and the sound effects
 
     //TODO: Quadrature Encoders on GPIO interrupts
+    IO0IntEnF |= (0b11 << 27);
+    IO0IntClr |= (0b11 << 27);
+    ISER0 |= (1<<18);
 
     //Wait some time so the RES is applied
     wait_ticks(10000);
@@ -83,6 +101,7 @@ int main(void)
 
         //Slow down the run so the game is playable
         wait_ticks(500000);
+        p1pos = p1pos;
     }
 
     return 0;

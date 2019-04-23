@@ -40,7 +40,7 @@ typedef struct GPIO_regs_t
 #define SPI_CLK_CNT (*(volatile int *) 0x4002000C)
 
 //GPIO
-//#define IO0IntEnR (*(volatile int *) 0x40028090)
+#define IO0IntEnR (*(volatile int *) 0x40028090)
 #define IO0IntEnF (*(volatile int *) 0x40028094)
 #define IO0IntStatF (*(volatile int *) 0x40028088)
 #define IO0IntClr (*(volatile int *) 0x4002808C)
