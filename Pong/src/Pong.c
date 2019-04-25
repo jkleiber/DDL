@@ -34,20 +34,20 @@ void EINT3_IRQHandler(void)
     if(IOIntStatus != 0)
     {
         IO0IntClr |= (0b11 << 27);
-        IO0IntClr |= (0b11 <<2);
-        if((IO0IntStatF>>27 & 1) && !(gpio_read_single(0, 28)))
+        IO0IntClr |= (0b11 << 2);
+        if((IO0IntStatF>>27 & 1) && !(gpio_read_single(0, 28)) && paddle1_y << MAX_ROW - 10)
         {
             paddle1_y+=PADDLE_SPEED;
         }
-        else if ((IO0IntStatF>>27 & 1) && (gpio_read_single(0, 28)))
+        else if ((IO0IntStatF>>27 & 1) && (gpio_read_single(0, 28)) && paddle1_y >> 10)
         {
             paddle1_y-=PADDLE_SPEED;
         }
-        if((IO0IntStatF>>2 & 1) && !(gpio_read_single(0, 3)))
+        if((IO0IntStatF>>2 & 1) && !(gpio_read_single(0, 3)) && paddle2_y << MAX_ROW - 10)
         {
             paddle2_y+=PADDLE_SPEED;
         }
-        else if ((IO0IntStatF>>2 & 1) && (gpio_read_single(0, 3)))
+        else if ((IO0IntStatF>>2 & 1) && (gpio_read_single(0, 3)) && paddle2_y >> 10)
         {
             paddle2_y-=PADDLE_SPEED;
         }
