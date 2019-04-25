@@ -10,8 +10,8 @@
 
 //Program constants
 #define BALL_SIZE       3
-#define BALL_SPEED      1
-#define PADDLE_SPEED    3
+#define BALL_SPEED      2
+#define PADDLE_SPEED    1
 #define PADDLE_LENGTH   10
 #define PADDLE_WIDTH    2
 #define BALL_X_START    40
@@ -20,7 +20,7 @@
 #define P1_Y_START      20
 #define P2_X_START      79
 #define P2_Y_START      20
-#define GOAL_TIME       100000
+#define GOAL_TIME       20
 
 //Variables for pong paddle tracking
 volatile int paddle1_x = P1_X_START;
@@ -46,25 +46,40 @@ void EINT3_IRQHandler(void)
     int status = IOIntStatus;
     if(IOIntStatus != 0)
     {
-        IO0IntClr |= (0b11 << 27);
-        IO0IntClr |= (0b11 << 2);
-        if((IO0IntStatF>>27 & 1) && !(gpio_read_single(0, 28)) && paddle1_y << MAX_ROW - 10)
-        {
-            paddle1_y+=PADDLE_SPEED;
-        }
-        else if ((IO0IntStatF>>27 & 1) && (gpio_read_single(0, 28)) && paddle1_y >> 10)
-        {
-            paddle1_y-=PADDLE_SPEED;
-        }
-        if((IO0IntStatF>>2 & 1) && !(gpio_read_single(0, 3)) && paddle2_y << MAX_ROW - 10)
+        
+        if((IO0IntStatF>>27 & 1) && !(gpio_read_single(0, 28)) && paddle2_y < MAX_ROW - PADDLE_LENGTH)
         {
             paddle2_y+=PADDLE_SPEED;
         }
-        else if ((IO0IntStatF>>2 & 1) && (gpio_read_single(0, 3)) && paddle2_y >> 10)
+        else if ((IO0IntStatF>>27 & 1) && (gpio_read_single(0, 28)) && paddle2_y > 0)
         {
             paddle2_y-=PADDLE_SPEED;
         }
+        IO0IntClr |= (0b11 << 27);
+
+        if((IO0IntStatF>>2 & 1) && !(gpio_read_single(0, 3)) && paddle1_y < MAX_ROW - PADDLE_LENGTH)
+        {
+            paddle1_y+=PADDLE_SPEED;
+        }
+        else if ((IO0IntStatF>>2 & 1) && (gpio_read_single(0, 3)) && paddle1_y > 0)
+        {
+            paddle1_y-=PADDLE_SPEED;
+        }
+        IO0IntClr |= (0b11 << 2);
     }
+}
+
+int paddle_collide(int paddle_x, int paddle_y)
+{
+    if((paddle_x + PADDLE_WIDTH) >= ball_x && paddle_x <= (ball_x + BALL_SIZE))
+    {
+        if(paddle_y <= ball_y && (paddle_y + PADDLE_LENGTH) >= (ball_y + BALL_SIZE))
+        {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
 }
 
 //Collision detection
@@ -79,12 +94,24 @@ void check_collision()
         sound = TRUE;
     }
 
-    //Bounce off the paddles
-    if((ball_x == (paddle1_x + PADDLE_WIDTH) && (ball_y >= paddle1_y && ball_y < (paddle1_y + PADDLE_LENGTH)))
-    || ((ball_x + BALL_SIZE) == paddle2_x && (ball_y >= paddle2_y && ball_y < (paddle2_y + PADDLE_LENGTH))))
+    //Bounce off the player 1 paddle
+    if(paddle1_x <= ball_x && (paddle1_x + PADDLE_WIDTH) > ball_x)
     {
-        ball_x_spd = -ball_x_spd;
-        sound = TRUE;
+        if(paddle1_y <= ball_y && (paddle1_y + PADDLE_LENGTH) > ball_y)
+        {
+            ball_x_spd = -ball_x_spd;
+            sound = TRUE;
+        }
+    }
+    
+    //Bounce off the player 2 paddle
+    if((paddle2_x + PADDLE_WIDTH) > ball_x && paddle2_x <= ball_x)
+    {
+        if(paddle2_y <= ball_y && (paddle2_y + PADDLE_LENGTH) > ball_y)
+        {
+            ball_x_spd = -ball_x_spd;
+            sound = TRUE;
+        }
     }
 
     //TODO: Make sound if needed (DMA?)

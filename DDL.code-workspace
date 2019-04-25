@@ -22,5 +22,9 @@
             "path": "Pong"
         }
     ],
-    "settings": {}
+    "settings": {
+        "files.associations": {
+            "constants.h": "c"
+        }
+    }
 }
