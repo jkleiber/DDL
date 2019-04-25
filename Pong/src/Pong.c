@@ -76,6 +76,7 @@ void check_collision()
     if((ball_y + BALL_SIZE) >= MAX_ROW || ball_y <= 0)
     {
         ball_y_spd = -ball_y_spd;
+        wall_sound();
         sound = TRUE;
     }
 
@@ -85,6 +86,7 @@ void check_collision()
     {
         ball_x_spd = -ball_x_spd;
         sound = TRUE;
+        wall_sound();
     }
 
     //TODO: Make sound if needed (DMA?)
@@ -110,6 +112,22 @@ void check_goal()
     }
 }
 
+//Make sound
+void wall_sound()
+{
+    for(amp = 500; amp >= 400; amp-=1s)
+            {
+                //Run 5 times at the same amplitude before dropping down one increment
+                //for(int i = 0; i < 2; ++i)
+                {
+                    DACR = (amp << 6);
+                    wait_ticks(500);
+                    DACR = 0;
+                    wait_ticks(500);
+                }
+            }
+}
+
 int main(void) 
 {
     //Reset the LCD immediately
@@ -126,6 +144,13 @@ int main(void)
     IO0IntEnF |= (0b11 << 2);
     IO0IntClr |= (0b11 << 2);
     ISER0 |= (1<<21);
+
+    //Configure the clock source
+    PCLKSEL0 |= (1 << 22);
+
+    //Configure the PINSEL registers to enable AOUT
+    PINSEL1 |= (1 << 21);
+
 
     //Wait some time so the RES is applied
     wait_ticks(10000);

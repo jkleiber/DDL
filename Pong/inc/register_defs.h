@@ -47,6 +47,10 @@ typedef struct GPIO_regs_t
 #define ISER0 (*(volatile int *) 0xE000E100)
 #define IOIntStatus (*(volatile int*) 0x40028080)
 
+
+//Sound-define DAC registers
+#define DACR (*(volatile int *) 0x4008C000)
+
 //External interrupts
 //#define EXTINT (*(volatile int *) 0x400FC140)
 //#define EXTMODE (*(volatile int *) 0x400FC148)
