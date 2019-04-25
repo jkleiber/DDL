@@ -10,4 +10,8 @@
 #define OFF 0
 #define ON 1
 
+#define PLAYING 0
+#define P1_GOAL 1
+#define P2_GOAL 2
+
 #endif
