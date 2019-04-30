@@ -20,7 +20,7 @@
 #define P1_Y_START      20
 #define P2_X_START      79
 #define P2_Y_START      20
-#define GOAL_TIME       20
+#define GOAL_TIME       1
 
 //Variables for pong paddle tracking
 volatile int paddle1_x = P1_X_START;
@@ -69,19 +69,6 @@ void EINT3_IRQHandler(void)
     }
 }
 
-int paddle_collide(int paddle_x, int paddle_y)
-{
-    if((paddle_x + PADDLE_WIDTH) >= ball_x && paddle_x <= (ball_x + BALL_SIZE))
-    {
-        if(paddle_y <= ball_y && (paddle_y + PADDLE_LENGTH) >= (ball_y + BALL_SIZE))
-        {
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
-
 //Collision detection
 void check_collision()
 {
@@ -95,29 +82,28 @@ void check_collision()
     }
 
     //Bounce off the player 1 paddle
-    if(paddle1_x <= ball_x && (paddle1_x + PADDLE_WIDTH) > ball_x)
+    if(ball_x >= paddle1_x && ball_x < (paddle1_x + PADDLE_WIDTH))
     {
-        if(paddle1_y <= ball_y && (paddle1_y + PADDLE_LENGTH) > ball_y)
+        if(paddle1_y < (ball_y + BALL_SIZE) && (paddle1_y + PADDLE_LENGTH) > ball_y)
         {
             ball_x_spd = -ball_x_spd;
             sound = TRUE;
         }
     }
-    
     //Bounce off the player 2 paddle
-    if((paddle2_x + PADDLE_WIDTH) > ball_x && paddle2_x <= ball_x)
+    else if ((ball_x + BALL_SIZE) >= paddle2_x && ball_x < (paddle2_x + PADDLE_WIDTH))
     {
-        if(paddle2_y <= ball_y && (paddle2_y + PADDLE_LENGTH) > ball_y)
+        if(paddle2_y < (ball_y + BALL_SIZE) && (paddle2_y + PADDLE_LENGTH) > ball_y)
         {
             ball_x_spd = -ball_x_spd;
             sound = TRUE;
         }
     }
 
-    //TODO: Make sound if needed (DMA?)
+    //Make sound if needed
     if(sound)
     {
-
+        wall_sound();
     }
 }
 
@@ -137,6 +123,33 @@ void check_goal()
     }
 }
 
+//Make sound
+void wall_sound()
+{
+    for(int amp = 500; amp >= 400; amp-=3)
+    {
+        {
+            DACR = (amp << 6);
+            wait_ticks(300);
+            DACR = 0;
+            wait_ticks(300);
+        }
+    }
+}
+
+void point_sound()
+{
+     for(int amp = 600; amp >= 400; amp-=3)
+    {
+        {
+            DACR = (amp << 6);
+            wait_ticks(900);
+            DACR = 0;
+            wait_ticks(900);
+        }
+    }
+}
+
 int main(void) 
 {
     //Reset the LCD immediately
@@ -145,14 +158,19 @@ int main(void)
     //Initialize goal variables
     goal_timer = 0;
 
-    //TODO: Set up the audio output (DMA) and the sound effects
-
     //Quadrature Encoders on GPIO interrupts
     IO0IntEnF |= (0b11 << 27);
     IO0IntClr |= (0b11 << 27);
     IO0IntEnF |= (0b11 << 2);
     IO0IntClr |= (0b11 << 2);
     ISER0 |= (1<<21);
+
+    /** Set up the audio output and the sound effects **/
+    //Configure the clock source
+    PCLKSEL0 |= (1 << 22);
+
+    //Configure the PINSEL registers to enable AOUT
+    PINSEL1 |= (1 << 21);
 
     //Wait some time so the RES is applied
     wait_ticks(10000);
@@ -182,6 +200,11 @@ int main(void)
             paddle2_x = P2_X_START;
             paddle2_y = P2_Y_START;
             
+            if(goal_timer == 0)
+            {
+                point_sound();
+            }
+
             //Increment goal timer
             ++goal_timer;
 
@@ -190,6 +213,7 @@ int main(void)
                 game_state = PLAYING;
                 goal_timer = 0;
             }
+           
         }
         //Normal play updates
         else if(game_state == PLAYING)
