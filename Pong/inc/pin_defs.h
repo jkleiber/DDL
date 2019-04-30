@@ -9,6 +9,4 @@
 #define LCD_DC_PORT     2   //D/C not port for LCD
 #define LCD_DC_PIN      6   //D/C not pin for LCD
 
-//TODO: AOUT pin stuff
-
 #endif
